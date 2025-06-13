@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .bg-gold-500 {
+    @apply bg-[#FFD700];
+  }
+  .hover\:bg-gold-600:hover {
+    @apply bg-[#FFC000];
+  }
+  .text-gold-500 {
+    @apply text-[#FFD700];
+  }
+}
