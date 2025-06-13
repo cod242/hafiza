@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAFIZA - Premium Shop</title>
+  <!-- CryptoJS Kütüphanesi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    /* TAILWIND TARZI CSS */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background: #1a1a1a;
+      padding: 1rem;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 100;
+    }
+    .gold-text {
+      color: #FFD700;
+    }
+    .chat-btn {
+      background: #FFD700;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .chat-box {
+      background: #1a1a1a;
+      width: 300px;
+      height: 400px;
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      border-radius: 10px;
+      padding: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <h1 class="gold-text" style="font-size: 1.5rem; font-weight: bold;">HAFIZA</h1>
+    <select id="currencySelect" style="background: #333; color: white; padding: 0.5rem; border-radius: 5px;">
+      <option value="TL">₺ TL</option>
+      <option value="USD">$ USD</option>
+      <option value="EUR">€ EUR</option>
+    </select>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div style="margin-top: 70px; padding: 1rem;">
+    <h2 style="font-size: 2rem;">Premium Ürünler</h2>
+    <div id="products" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+      <!-- Ürünler JS ile eklenecek -->
+    </div>
+  </div>
+
+  <!-- CHAT BUTTON -->
+  <div class="chat-btn" onclick="toggleChat()">💬</div>
+  <div class="chat-box" id="chatBox">
+    <h3 style="border-bottom: 1px solid #333; padding-bottom: 0.5rem;">Canlı Destek</h3>
+    <div id="chatMessages" style="height: 300px; overflow-y: scroll; margin: 1rem 0;"></div>
+    <input type="text" id="messageInput" placeholder="Mesajınız..." style="width: 100%; padding: 0.5rem; background: #333; color: white; border: none; border-radius: 5px;">
+  </div>
+
+  <script>
+    // ŞİFRELEME ANAHTARI (GERÇEK PROJEDE .env'DE SAKLA!)
+    const SECRET_KEY = "hafiza-256bit-key-1234567890!@#$%^";
+
+    // Veriyi Şifreleme
+    function encryptData(data) {
+      return CryptoJS.AES.encrypt(
+        JSON.stringify(data), 
+        SECRET_KEY
+      ).toString();
+    }
+
+    // Veriyi Çözme
+    function decryptData(encryptedData) {
+      const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
+      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    }
+
+    // ÜRÜNLERİ YÜKLE
+    const products = [
+      { id: 1, name: "Premium Saat", price: 1500, currency: "TL" },
+      { id: 2, name: "Lüks Cüzdan", price: 800, currency: "TL" },
+      { id: 3, name: "Tasarım Gözlük", price: 1200, currency: "TL" }
+    ];
+
+    function renderProducts() {
+      const container = document.getElementById('products');
+      const currency = document.getElementById('currencySelect').value;
+      
+      container.innerHTML = products.map(product => `
+        <div style="background: #1a1a1a; padding: 1rem; border-radius: 8px;">
+          <h3>${product.name}</h3>
+          <p class="gold-text">${convertCurrency(product.price, currency)} ${currency}</p>
+          <button onclick="addToCart(${product.id})" style="background: #FFD700; color: black; padding: 0.5rem; border: none; border-radius: 5px; margin-top: 0.5rem;">Sepete Ekle</button>
+        </div>
+      `).join('');
+    }
+
+    // DÖVİZ ÇEVİRME
+    function convertCurrency(price, targetCurrency) {
+      const rates = { TL: 1, USD: 0.033, EUR: 0.030 };
+      return (price * rates[targetCurrency]).toFixed(2);
+    }
+
+    // SEPETE EKLEME (ŞİFRELİ)
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      let cart = [];
+      
+      // LocalStorage'dan şifrelenmiş sepeti al
+      const encryptedCart = localStorage.getItem('cart');
+      if (encryptedCart) {
+        cart = decryptData(encryptedCart);
+      }
+      
+      // Ürünü sepete ekle
+      cart.push(product);
+      
+      // Sepeti şifrele ve kaydet
+      localStorage.setItem('cart', encryptData(cart));
+      alert(`${product.name} sepete eklendi!`);
+    }
+
+    // CANLI DESTEK
+    function toggleChat() {
+      const chatBox = document.getElementById('chatBox');
+      chatBox.style.display = chatBox.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // SAYFA YÜKLENİNCE ÇALIŞTIR
+    document.addEventListener('DOMContentLoaded', () => {
+      renderProducts();
+      
+      // Döviz seçici değişince
+      document.getElementById('currencySelect').addEventListener('change', renderProducts);
+    });
+  </script>
+</body>
+</html>
